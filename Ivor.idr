@@ -1,6 +1,7 @@
 module Ivor
 
 import Ivor.Install
+import Ivor.Subprocess
 import Ivor.Util
 
 import System
@@ -26,7 +27,7 @@ parseArgs _ = Nothing
 
 processArgs : List String -> Program Int
 processArgs args = case parseArgs args of
-                        Just InstallLocal => installLocal "./ivor.yaml"
+                        Just InstallLocal => installYaml "./ivor.yaml"
                         Just (InstallGithub repo) => installFromGithub repo
                         Nothing => do 
                           putStrLn "Unrecognized command. Usage: ivor install or ivor install user/repo" 
@@ -41,4 +42,5 @@ namespace Main
   main : IO ()
   main = do
     result <- run $ program 
+    putStrLn "Done."
     exit result
