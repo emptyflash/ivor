@@ -4,10 +4,6 @@ import Ivor.Util
 
 import Yaml
 
-import Effects
-import Effect.System
-import Effect.StdIO
-
 %access public export
 
 installYaml : String -> Program Int

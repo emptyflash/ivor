@@ -1,18 +1,9 @@
 module Ivor
 
 import Ivor.Install
-import Ivor.Subprocess
 import Ivor.Util
 
 import System
-import System.Info
-import Effects
-import Effect.System
-import Effect.StdIO
-
-
--- %include C "ivor.h"
--- %link C "ivor.o"
 
 
 data Command

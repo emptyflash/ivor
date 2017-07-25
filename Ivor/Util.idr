@@ -1,12 +1,12 @@
 module Ivor.Util
 
-import Ivor.Subprocess
+import public Ivor.Subprocess
 
 import System.Info
 
-import Effects
-import Effect.System
-import Effect.StdIO
+import public Effects
+import public Effect.System
+import public Effect.StdIO
 
 %access public export
 
