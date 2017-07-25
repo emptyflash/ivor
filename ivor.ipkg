@@ -1,0 +1,8 @@
+package ivor
+
+sourcedir = .
+modules = Ivor
+
+opts = "-p effects -p contrib" 
+
+objs = ivor.o, ivor.h
