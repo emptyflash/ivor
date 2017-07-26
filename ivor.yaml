@@ -1,0 +1,5 @@
+name : "Ivor"
+version : "1.0.0"
+description : "The steam powered Idris package manager"
+dependencies : - "ziman/lightyear"
+               - "Heather/Idris.Yaml"

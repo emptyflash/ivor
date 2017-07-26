@@ -1,13 +1,10 @@
 module Ivor.Install
 
 import Ivor.Util
-
-import Yaml
+import Ivor.Config
 
 %access public export
 
-installYaml : String -> Program Int
-installYaml yamFile = pure 0
 
 makePackagesDir : Program String 
 makePackagesDir = do
@@ -39,7 +36,6 @@ cloneRepo pkgsDir repo = do
   system $ "cd " ++ pkgsDir ++ " && git clone " ++ githubUrl repo ++ " " ++ repoDir
   pure $ fullDir
 
-
 installFromGithub : String -> Program Int
 installFromGithub repo = do
   pkgsDir <- makePackagesDir
@@ -47,6 +43,17 @@ installFromGithub repo = do
   if !(fileExists $ fullRepo ++ "/Makefile") 
      then installMakefile fullRepo
      else do
-       Just ipkg <- findIpkgName fullRepo | Nothing => do putStrLn $ "No .ipkg found for " ++ repo
+       Just ipkg <- findIpkgName fullRepo | Nothing => do putStrLn $ "No .ipkg found in " ++ repo
                                                           pure 1
        installIpkg fullRepo ipkg
+
+
+installYaml : String -> Program Int
+installYaml yamlFile = do
+  Right config <- parseYamlFile yamlFile 
+                  | Left err => do putStrLn err
+                                   pure 1
+  printLn (dependencies config)
+  results <- mapE (\t => installFromGithub t) (dependencies config)
+  pure 0
+

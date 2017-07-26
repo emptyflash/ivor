@@ -7,12 +7,13 @@ import System.Info
 import public Effects
 import public Effect.System
 import public Effect.StdIO
+import public Effect.File
 
 %access public export
 
 Program : Type -> Type
 Program return = 
-  Eff return [ SYSTEM, STDIO, SUBPROCESS () ]
+  Eff return [ SYSTEM, STDIO, SUBPROCESS (), FILE () ]
 
 idrisAppDir : String
 idrisAppDir = 
@@ -33,6 +34,11 @@ subprocess cmd = do
   PReturn result <- preadAll | PError err => do 
                                                 pure $ "Error reading stdout: " ++ show err
   pure result
+
+pwd : Program String
+pwd = do
+  result <- subprocess $ "pwd"
+  pure $ trim result
 
 ls : String -> Program (List String)
 ls dir = do
