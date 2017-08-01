@@ -54,5 +54,6 @@ mapToConfig smap = do
 parseConfigFile : String -> Program (Either String Config)
 parseConfigFile file = do
   Result contents <- readFile file | FError err => (pure $ Left $ show err)
+  putStrLn contents
   let smap = parseToml contents
   pure $ mapToConfig smap

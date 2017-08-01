@@ -3,6 +3,11 @@ module Ivor.Install
 import Ivor.Util
 import public Ivor.Config
 
+import IPkgParser
+import IPkgParser.Model
+
+import Lightyear.Strings
+
 %access public export
 
 
@@ -11,6 +16,13 @@ makePackagesDir = do
   let pkgDir = idrisAppDir ++ "/packages"
   system $ "mkdir -p " ++ pkgDir
   pure pkgDir
+
+makeDepsDir : Program String
+makeDepsDir = do
+  wd <- pwd
+  let depsDir = wd ++ "/deps"
+  system $ "mkdir -p " ++ depsDir
+  pure depsDir
 
 fileExists : String -> Program Bool
 fileExists dir = do
@@ -23,8 +35,30 @@ findIpkgName dir = do
   let pkgs = List.filter (Strings.isSuffixOf ".ipkg") files
   pure (head' pkgs)
 
-installIpkg : String -> String -> Program Int
-installIpkg dir file = system $ "cd " ++ dir ++ " && idris --install " ++ file
+ipkgNameEntry : IPackageEntry -> Maybe String
+ipkgNameEntry (IPkgName name) = Just name
+ipkgNameEntry _ = Nothing
+
+ipkgFileToName : IPkgFile -> Maybe String
+ipkgFileToName (MkIPkgFile xs) = head' xs >>= ipkgNameEntry
+ipkgFileToName _ = Nothing
+
+installIpkg : String -> String -> String -> Dependency -> Program Dependency
+installIpkg ipkgDir ipkgFile depsDir dependency = do
+  system $ "cd " ++ ipkgDir ++ " && idris --install " ++ ipkgFile ++ " --ibcsubdir " ++ depsDir
+  (fullFilename :: _) <- ls $ ipkgDir ++ "/" ++ ipkgFile | _ => do putStrLn "Problem finding ipkg file"
+                                                                   pure dependency
+  Result ipkgContents <- readFile fullFilename | FError err => do putStrLn $ "Error reading file: " 
+                                                                           ++ fullFilename
+                                                                  printLn err
+                                                                  pure dependency
+  case Strings.parse parseIPkgFile ipkgContents of
+       Right ipkg => do
+         let ipkgName = ipkgFileToName ipkg
+         pure $ record { pkgName = ipkgName } dependency
+       Left err => do
+         putStrLn "Error parsing ipkg file"
+         pure dependency
 
 installMakefile : String -> Program Int
 installMakefile dir = system $ "cd " ++ dir ++ " && make install"
@@ -53,21 +87,16 @@ updateRepo pkgsDir repo maybeVersion = do
        Nothing => pure ()
   pure fullDir
 
-installFromGithub : Dependency -> Program Int
+installFromGithub : Dependency -> Program Dependency
 installFromGithub dep = do
   let repo = name dep
   let maybeVersion = version dep
   pkgsDir <- makePackagesDir
+  depsDir <- makeDepsDir
   fullRepo <- updateRepo pkgsDir repo maybeVersion
-  {- fuck makefiles for now
-  if !(fileExists $ fullRepo ++ "/Makefile") 
-     then installMakefile fullRepo
-     else pure 0
-   -}
   Just ipkg <- findIpkgName fullRepo | Nothing => do putStrLn $ "No .ipkg found in " ++ repo
-                                                     pure 1
-  installIpkg fullRepo ipkg
-
+                                                     pure dep
+  installIpkg fullRepo ipkg depsDir dep
 
 installConfig : String -> Program Int
 installConfig configFile = do

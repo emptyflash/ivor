@@ -14,3 +14,4 @@ pkgs = effects
      , contrib
      , lightyear
      , tomladris
+     , ipkgparser

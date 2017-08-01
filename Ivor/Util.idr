@@ -44,4 +44,3 @@ ls : String -> Program (List String)
 ls dir = do
   result <- subprocess $ "ls " ++ dir
   pure $ join $ map words $ lines $ result
-
