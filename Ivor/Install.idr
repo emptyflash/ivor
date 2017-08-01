@@ -1,7 +1,7 @@
 module Ivor.Install
 
 import Ivor.Util
-import Ivor.Config
+import public Ivor.Config
 
 %access public export
 
@@ -29,31 +29,50 @@ installIpkg dir file = system $ "cd " ++ dir ++ " && idris --install " ++ file
 installMakefile : String -> Program Int
 installMakefile dir = system $ "cd " ++ dir ++ " && make install"
 
-cloneRepo : String -> String -> Program String
-cloneRepo pkgsDir repo = do
+cloneRepo : String -> String -> String -> Program Int
+cloneRepo pkgsDir repoUrl repoDir =
+  system $ "cd " ++ pkgsDir ++ " && git clone " ++ repoUrl ++ " " ++ repoDir
+
+fetchRepo : String -> Program Int
+fetchRepo fullDir =
+  system $ "cd " ++ fullDir ++ " && git fetch"
+
+applyGitVersion : String -> String -> Program Int
+applyGitVersion fullDir version =
+  system $ "cd " ++ fullDir ++ " && git checkout " ++ version
+
+updateRepo : String -> String -> Maybe String -> Program String
+updateRepo pkgsDir repo maybeVersion = do
   let repoDir = dirFromRepo repo
   let fullDir = pkgsDir ++ "/" ++ repoDir
-  system $ "cd " ++ pkgsDir ++ " && git clone " ++ githubUrl repo ++ " " ++ repoDir
-  pure $ fullDir
+  if !(fileExists fullDir)
+     then fetchRepo fullDir
+     else cloneRepo pkgsDir (githubUrl repo) repoDir
+  case maybeVersion of
+       Just version => do applyGitVersion fullDir version; pure ()
+       Nothing => pure ()
+  pure fullDir
 
-installFromGithub : String -> Program Int
-installFromGithub repo = do
+installFromGithub : Dependency -> Program Int
+installFromGithub dep = do
+  let repo = name dep
+  let maybeVersion = version dep
   pkgsDir <- makePackagesDir
-  fullRepo <- cloneRepo pkgsDir repo
+  fullRepo <- updateRepo pkgsDir repo maybeVersion
+  {- fuck makefiles for now
   if !(fileExists $ fullRepo ++ "/Makefile") 
      then installMakefile fullRepo
-     else do
-       Just ipkg <- findIpkgName fullRepo | Nothing => do putStrLn $ "No .ipkg found in " ++ repo
-                                                          pure 1
-       installIpkg fullRepo ipkg
+     else pure 0
+   -}
+  Just ipkg <- findIpkgName fullRepo | Nothing => do putStrLn $ "No .ipkg found in " ++ repo
+                                                     pure 1
+  installIpkg fullRepo ipkg
 
 
-installYaml : String -> Program Int
-installYaml yamlFile = do
-  Right config <- parseYamlFile yamlFile 
-                  | Left err => do putStrLn err
-                                   pure 1
-  printLn (dependencies config)
+installConfig : String -> Program Int
+installConfig configFile = do
+  Right config <- parseConfigFile configFile | Left err => do putStrLn err; pure 1
+  printLn $ map name $ dependencies $ config
   results <- mapE (\t => installFromGithub t) (dependencies config)
   pure 0
 

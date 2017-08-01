@@ -2,48 +2,57 @@ module Ivor.Config
 
 import Ivor.Util
 
-import Data.SortedMap
-
-import Yaml
 import Lightyear
 import Lightyear.StringFile
 
+import Tomladris
+
 import Data.SortedMap
+import Debug.Trace
 
 %access public export
+
+record Dependency where
+  constructor MkDep
+  name: String
+  pkgName: Maybe String
+  version: Maybe String
 
 record Config where
   constructor MkConfig
   name, version, description: String
-  dependencies: List String
+  dependencies: List Dependency
 
-yamlStrings : List YamlValue -> List String
-yamlStrings [] = []
-yamlStrings ((YamlString x) :: xs) = x :: yamlStrings xs
-yamlStrings (_  :: xs) = yamlStrings xs
+lookupEither : String -> SortedMap String TomlValue -> Either String TomlValue
+lookupEither key map =
+  maybeToEither ("No " ++ key ++ " attibute specified") (lookup key map)
 
-configFromMap : SortedMap String YamlValue -> Either String Config
-configFromMap object = do
-  YamlString name    <- maybeToEither "No name attibute specified" $ lookup "name" object 
-                        | _ => Left "Name attribute has wrong type"
-  YamlString ver     <- maybeToEither "No version attibute specified" $ lookup "version" object 
-                        | _ => Left "Version attribute has wrong type"
-  YamlString desc    <- maybeToEither "No description attribute" $ lookup "description" object 
-                        | _ => Left "Description attribute has wrong type"
-  YamlArray yamlDeps <- maybeToEither "No dependencies specified" $ lookup "dependencies" object 
-                        | _ => Left "Dependencies attribute has wrong type"
-  let deps = yamlStrings yamlDeps
-  pure (MkConfig name ver desc deps)
+lookupTomlString : String -> SortedMap String TomlValue -> Either String String
+lookupTomlString key map = do
+  TString name <- lookupEither "name" map | _ => Left (key ++ " attibute was the wrong type")
+  Right name
 
-parseYamlConfig : Parser (Either String Config)
-parseYamlConfig = do
-  YamlObject object <- yamlToplevelValue | _ => (pure $ Left "Top level value shouldn't be a list")
-  pure (configFromMap object)
+lookupKeyValues : String -> SortedMap String TomlValue -> List (String, String)
+lookupKeyValues keyPrefix smap = do
+  (key, TString val) <- filter (Strings.isPrefixOf keyPrefix . fst) $ toList $ smap 
+                        | _ => []
+  let strippedKey = ltrim $ pack $ drop (length keyPrefix + 1) $ unpack $ key
+  pure (strippedKey, val)
 
-parseYamlFile : String -> Program (Either String Config)
-parseYamlFile file = do
-  result <- parseFile dispFileError dispParseError parseYamlConfig file
-  pure (join $ result)
-where
-  dispFileError f e = show e ++ " in " ++ f
-  dispParseError f e = "Error parsing " ++ f ++ ": " ++ e
+pkglessDep : String -> String -> Dependency
+pkglessDep name ver = 
+  MkDep name Nothing (Just ver)
+
+mapToConfig : SortedMap String TomlValue -> Either String Config
+mapToConfig smap = do
+  name <- lookupTomlString "name" smap
+  ver <- lookupTomlString "version" smap
+  desc <- lookupTomlString "description" smap
+  let deps = map (uncurry pkglessDep) $ lookupKeyValues "dependencies" smap
+  Right $ MkConfig name ver desc deps
+
+parseConfigFile : String -> Program (Either String Config)
+parseConfigFile file = do
+  Result contents <- readFile file | FError err => (pure $ Left $ show err)
+  let smap = parseToml contents
+  pure $ mapToConfig smap

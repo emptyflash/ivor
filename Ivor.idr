@@ -18,8 +18,8 @@ parseArgs _ = Nothing
 
 processArgs : List String -> Program Int
 processArgs args = case parseArgs args of
-                        Just InstallLocal => installYaml "./ivor.yaml"
-                        Just (InstallGithub repo) => installFromGithub repo
+                        Just InstallLocal => installConfig "./ivor.toml"
+                        Just (InstallGithub repo) => installFromGithub (MkDep repo Nothing Nothing)
                         Nothing => do 
                           putStrLn "Unrecognized command. Usage: ivor install or ivor install user/repo" 
                           pure 1

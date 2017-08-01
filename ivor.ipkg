@@ -1,8 +1,16 @@
 package ivor
 
-sourcedir = .
 modules = Ivor
+        , Ivor.Install
+        , Ivor.Util
+        , Ivor.Config
+        , Ivor.Subprocess
 
-opts = "-p effects -p contrib" 
+main = Ivor
 
-objs = ivor.o, ivor.h
+executable = ivor.run
+
+pkgs = effects
+     , contrib
+     , lightyear
+     , tomladris
