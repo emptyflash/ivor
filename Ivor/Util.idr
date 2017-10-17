@@ -28,6 +28,11 @@ githubUrl repo =
 dirFromRepo : String -> String
 dirFromRepo repo = pack $ replaceOn '/' '_' $ unpack $ repo
 
+fileExists : String -> Program Bool
+fileExists dir = do
+  result <- system $ "test -e " ++ dir
+  pure (result == 0)
+
 subprocess : String -> Eff String [ SUBPROCESS () ]
 subprocess cmd = do 
   PSuccess <- popen cmd | PError err => (pure $ "Error listing files in directory: " ++ show err)
@@ -41,6 +46,25 @@ pwd = do
   pure $ trim result
 
 ls : String -> Program (List String)
-ls dir = do
-  result <- subprocess $ "ls " ++ dir
+ls args = do
+  result <- subprocess $ "ls " ++ args
   pure $ join $ map words $ lines $ result
+
+listAllIdrisFiles : String -> Program (List String)
+listAllIdrisFiles dir =
+  ls $ dir ++ "/*.idr " ++ dir ++ "/**/*.idr"
+
+maybeToList : Maybe a -> List a
+maybeToList (Just a) = [a]
+maybeToList _ = []
+
+getDepsDir : Program String
+getDepsDir = do 
+  wd <- pwd
+  pure $ wd ++ "/deps"
+
+makeDepsDir : Program String
+makeDepsDir = do
+  depsDir <- getDepsDir
+  system $ "mkdir -p " ++ depsDir
+  pure depsDir

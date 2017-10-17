@@ -1,8 +1,11 @@
-name = "Ivor"
+name = "ivor"
 version = "1.0.0"
 description = "The steam powered Idris package manager"
+
+opts = "-p effects -p contrib"
+main = "Ivor"
 
 [dependencies]
 ziman/lightyear = "dbcd847ed7a9e62fa0b502b3d89cca43a96f256c"
 emptyflash/tomladris = "ec324128ebe8b446e84d8be60b0ed085d07fd36d"
-emptyflash/idris-ipkg-parser = "4ce4954f8ff3ede83d199e0593dd9f5fd6ddff3e"
+emptyflash/idris-ipkg-parser = "96f30602418496e1ed208565fed30660299e2a08"
