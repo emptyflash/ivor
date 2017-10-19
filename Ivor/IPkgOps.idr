@@ -25,9 +25,19 @@ iPkgFileToName : IPkgFile -> Maybe String
 iPkgFileToName (MkIPkgFile xs) = head' xs >>= iPkgNameEntry
 iPkgFileToName _ = Nothing
 
+
+ipkgInstallDir : Dependency -> String -> Program String
+ipkgInstallDir dependency depsDir =
+  let packageName = fromMaybe "" $ pkgName dependency
+      installDir = depsDir ++ "/" ++ packageName
+  in do
+    _ <- mkdirp installDir
+    pure installDir
+
 installIPkg : String -> String -> String -> Dependency -> Program Dependency
 installIPkg iPkgDir iPkgFile depsDir dependency = do
-  system $ "cd " ++ iPkgDir ++ " && idris --install " ++ iPkgFile ++ " --ibcsubdir " ++ depsDir
+  installDir <- ipkgInstallDir dependency depsDir
+  system $ "cd " ++ iPkgDir ++ " && idris --install " ++ iPkgFile ++ " --ibcsubdir " ++ installDir
     -- ++ " --idrispath " ++ depsDir
   (fullFilename :: _) <- ls $ iPkgDir ++ "/" ++ iPkgFile | _ => do putStrLn "Problem finding ipkg file"
                                                                    pure dependency

@@ -35,9 +35,9 @@ fileExists dir = do
 
 subprocess : String -> Eff String [ SUBPROCESS () ]
 subprocess cmd = do 
-  PSuccess <- popen cmd | PError err => (pure $ "Error listing files in directory: " ++ show err)
+  PSuccess <- popen cmd | PError err => (pure $ "Error opening subprocess: " ++ show err)
   PReturn result <- preadAll | PError err => do 
-                                                pure $ "Error reading stdout: " ++ show err
+                                                pure $ "Error reading subprocess: " ++ show err
   pure result
 
 pwd : Program String
@@ -63,8 +63,12 @@ getDepsDir = do
   wd <- pwd
   pure $ wd ++ "/deps"
 
+mkdirp : String -> Program Int
+mkdirp dir =
+  system $ "mkdir -p " ++ dir
+
 makeDepsDir : Program String
 makeDepsDir = do
   depsDir <- getDepsDir
-  system $ "mkdir -p " ++ depsDir
+  mkdirp depsDir
   pure depsDir

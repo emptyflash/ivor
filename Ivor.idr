@@ -24,17 +24,28 @@ idrisRepl : Program Int
 idrisRepl = do
   Right manifest <- parseManifestFile "./ivor.toml" | Left err => do putStrLn err; pure 1
   depsDir <- getDepsDir
-  Effect.System.system $ "idris --repl " ++ name manifest ++ ".ipkg --idrispath " ++ depsDir
+  Effect.System.system $ "IDRIS_LIBRARY_PATH=" ++ depsDir ++ " idris --repl " ++ name manifest ++ ".ipkg" 
 
 idrisBuild : Program Int
 idrisBuild = do
   Right manifest <- parseManifestFile "./ivor.toml" | Left err => do putStrLn err; pure 1
   depsDir <- getDepsDir
-  Effect.System.system $ "idris --build " ++ name manifest ++ ".ipkg --idrispath " ++ depsDir
+  Effect.System.system $ "IDRIS_LIBRARY_PATH=" ++ depsDir ++ " idris --build " ++ name manifest ++ ".ipkg"
+
+copyIdrisLibs : Program Int
+copyIdrisLibs = do
+  depsDir <- getDepsDir
+  idrisLibsDir <- subprocess "idris --libsdir"
+  system $ "cp -R " ++ idrisLibsDir ++ "/base " ++ depsDir
+  system $ "cp -R " ++ idrisLibsDir ++ "/prelude " ++ depsDir
+  system $ "cp -R " ++ idrisLibsDir ++ "/contrib " ++ depsDir
+  system $ "cp -R " ++ idrisLibsDir ++ "/effects " ++ depsDir
 
 processArgs : List String -> Program Int
 processArgs args = case parseArgs args of
-                        Just InstallLocal => installFromManifest "./ivor.toml"
+                        Just InstallLocal => do
+                          installFromManifest "./ivor.toml"
+                          copyIdrisLibs
                         Just Repl => idrisRepl
                         Just Build => idrisBuild
                         Just (InstallGithub repo) => do
