@@ -21,6 +21,10 @@ idrisAppDir =
        "Windows" => "%APPDATA%/idris"
        _ => "~/.idris"
 
+pkgsDir : String
+pkgsDir = 
+  idrisAppDir ++ "/packages"
+
 githubUrl : String -> String
 githubUrl repo =
   "https://github.com/" ++ repo ++ ".git"
@@ -72,3 +76,13 @@ makeDepsDir = do
   depsDir <- getDepsDir
   mkdirp depsDir
   pure depsDir
+
+idrisLibsDir : Program String
+idrisLibsDir =
+  trim <$> subprocess "idris --libdir"
+
+makePackagesDir : Program String 
+makePackagesDir = do
+  mkdirp pkgsDir
+  pure pkgsDir
+

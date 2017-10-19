@@ -1,5 +1,6 @@
 package ivor
 modules = Ivor, Ivor.IPkgOps, Ivor.Install, Ivor.Manifest, Ivor.Subprocess, Ivor.Util
+executable = ivor.run
 main = Ivor
 opts = "-p effects -p contrib"
 pkgs = lightyear, ipkgparser, tomladris

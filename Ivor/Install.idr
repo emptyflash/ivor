@@ -1,24 +1,18 @@
 module Ivor.Install
 
-import Ivor.Util
+import Ivor.Util as Util
 import Ivor.IPkgOps
 import public Ivor.Manifest
 
 %access public export
 
 
-makePackagesDir : Program String 
-makePackagesDir = do
-  let pkgDir = idrisAppDir ++ "/packages"
-  system $ "mkdir -p " ++ pkgDir
-  pure pkgDir
-
 installMakefile : String -> Program Int
 installMakefile dir = system $ "cd " ++ dir ++ " && make install"
 
-cloneRepo : String -> String -> String -> Program Int
-cloneRepo pkgsDir repoUrl repoDir =
-  system $ "cd " ++ pkgsDir ++ " && git clone " ++ repoUrl ++ " " ++ repoDir
+cloneRepo : String -> String -> Program Int
+cloneRepo repoUrl repoDir =
+  system $ "cd " ++ Util.pkgsDir ++ " && git clone " ++ repoUrl ++ " " ++ repoDir
 
 fetchRepo : String -> Program Int
 fetchRepo fullDir =
@@ -28,13 +22,13 @@ applyGitVersion : String -> String -> Program Int
 applyGitVersion fullDir version =
   system $ "cd " ++ fullDir ++ " && git checkout " ++ version
 
-updateRepo : String -> String -> Maybe String -> Program String
-updateRepo pkgsDir repo maybeVersion = do
+updateRepo : String -> Maybe String -> Program String
+updateRepo repo maybeVersion = do
   let repoDir = dirFromRepo repo
-  let fullDir = pkgsDir ++ "/" ++ repoDir
+  let fullDir = Util.pkgsDir ++ "/" ++ repoDir
   if !(fileExists fullDir)
      then fetchRepo fullDir
-     else cloneRepo pkgsDir (githubUrl repo) repoDir
+     else cloneRepo (githubUrl repo) repoDir
   case maybeVersion of
        Just version => do applyGitVersion fullDir version; pure ()
        Nothing => pure ()
@@ -44,9 +38,8 @@ installFromGithub : Dependency -> Program Dependency
 installFromGithub dep = do
   let repo = name dep
   let maybeVersion = version dep
-  pkgsDir <- makePackagesDir
-  depsDir <- makeDepsDir
-  fullRepo <- updateRepo pkgsDir repo maybeVersion
+  fullRepo <- updateRepo repo maybeVersion
+  depsDir <- getDepsDir
   Just iPkg <- findIPkgName fullRepo | Nothing => do putStrLn $ "No .ipkg found in " ++ repo
                                                      pure dep
   installIPkg fullRepo iPkg depsDir dep

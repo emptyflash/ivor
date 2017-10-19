@@ -35,20 +35,25 @@ idrisBuild = do
 copyIdrisLibs : Program Int
 copyIdrisLibs = do
   depsDir <- getDepsDir
-  idrisLibsDir <- subprocess "idris --libsdir"
-  system $ "cp -R " ++ idrisLibsDir ++ "/base " ++ depsDir
-  system $ "cp -R " ++ idrisLibsDir ++ "/prelude " ++ depsDir
-  system $ "cp -R " ++ idrisLibsDir ++ "/contrib " ++ depsDir
-  system $ "cp -R " ++ idrisLibsDir ++ "/effects " ++ depsDir
+  libsDir <- idrisLibsDir
+  system $ "cp -R " ++ libsDir ++ "/base " ++ depsDir
+  system $ "cp -R " ++ libsDir ++ "/prelude " ++ depsDir
+  system $ "cp -R " ++ libsDir ++ "/contrib " ++ depsDir
+  system $ "cp -R " ++ libsDir ++ "/effects " ++ depsDir
 
 processArgs : List String -> Program Int
 processArgs args = case parseArgs args of
                         Just InstallLocal => do
-                          installFromManifest "./ivor.toml"
+                          pkgsDir <- makePackagesDir
+                          depsDir <- makeDepsDir
                           copyIdrisLibs
+                          installFromManifest "./ivor.toml"
                         Just Repl => idrisRepl
                         Just Build => idrisBuild
                         Just (InstallGithub repo) => do
+                          pkgsDir <- makePackagesDir
+                          depsDir <- makeDepsDir
+                          copyIdrisLibs
                           installFromGithub (MkDep repo Nothing Nothing)
                           pure 0
                         Nothing => do 

@@ -27,18 +27,13 @@ iPkgFileToName _ = Nothing
 
 
 ipkgInstallDir : Dependency -> String -> Program String
-ipkgInstallDir dependency depsDir =
+ipkgInstallDir dependency depsDir = do
   let packageName = fromMaybe "" $ pkgName dependency
-      installDir = depsDir ++ "/" ++ packageName
-  in do
-    _ <- mkdirp installDir
-    pure installDir
+  let installDir = depsDir ++ "/" ++ packageName
+  pure installDir
 
-installIPkg : String -> String -> String -> Dependency -> Program Dependency
-installIPkg iPkgDir iPkgFile depsDir dependency = do
-  installDir <- ipkgInstallDir dependency depsDir
-  system $ "cd " ++ iPkgDir ++ " && idris --install " ++ iPkgFile ++ " --ibcsubdir " ++ installDir
-    -- ++ " --idrispath " ++ depsDir
+updatePkgName : String -> String -> Dependency -> Program Dependency
+updatePkgName iPkgDir iPkgFile dependency = do
   (fullFilename :: _) <- ls $ iPkgDir ++ "/" ++ iPkgFile | _ => do putStrLn "Problem finding ipkg file"
                                                                    pure dependency
   Result iPkgContents <- readFile fullFilename | FError err => do putStrLn $ "Error reading file: " 
@@ -50,8 +45,15 @@ installIPkg iPkgDir iPkgFile depsDir dependency = do
          let iPkgName = iPkgFileToName iPkg
          pure $ record { pkgName = iPkgName } dependency
        Left err => do
-         putStrLn "Error parsing ipkg file"
+         putStrLn $ "Error parsing ipkg file: " ++ show err
          pure dependency
+
+installIPkg : String -> String -> String -> Dependency -> Program Dependency
+installIPkg iPkgDir iPkgFile depsDir dependency = do
+  newDependency <- updatePkgName iPkgDir iPkgFile dependency
+  installDir <- ipkgInstallDir newDependency depsDir
+  system $ "cd " ++ iPkgDir ++ " && IDRIS_LIBRARY_PATH=" ++ depsDir ++ " idris --build " ++ iPkgFile ++ " --ibcsubdir " ++ installDir
+  pure newDependency
 
 
 normalizeDirectory : String -> String -> String
