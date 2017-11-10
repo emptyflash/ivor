@@ -5,6 +5,7 @@ description = "The steam powered Idris package manager"
 opts = "-p effects -p contrib"
 main = "Ivor"
 executable = "ivor.run"
+sourceDirectory = "src"
 
 [dependencies]
 ziman/lightyear = "dbcd847ed7a9e62fa0b502b3d89cca43a96f256c"
