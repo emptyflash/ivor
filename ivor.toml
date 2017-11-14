@@ -10,4 +10,4 @@ sourceDirectory = "src"
 [dependencies]
 ziman/lightyear = "dbcd847ed7a9e62fa0b502b3d89cca43a96f256c"
 emptyflash/tomladris = "ec324128ebe8b446e84d8be60b0ed085d07fd36d"
-emptyflash/idris-ipkg-parser = "96f30602418496e1ed208565fed30660299e2a08"
+emptyflash/idris-ipkg-parser = "35cc2f54d4f3b3710f637d0a8c897bfbb32fe183"

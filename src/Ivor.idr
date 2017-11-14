@@ -12,26 +12,42 @@ data Command
   | InstallGithub String
   | Repl
   | Build
+  | Test
 
 parseArgs : List String -> Maybe Command
 parseArgs ("install" :: []) = Just InstallLocal
 parseArgs ("repl" :: []) = Just Repl
 parseArgs ("build" :: []) = Just Build
+parseArgs ("test" :: []) = Just Test
 parseArgs ("install" :: repo :: []) = Just (InstallGithub repo)
 parseArgs _ = Nothing
 
-idrisRepl : Program Int
-idrisRepl = do
+data IdrisFlag
+  = ReplFlag
+  | BuildFlag
+  | TestFlag
+
+flagToString : IdrisFlag -> String
+flagToString ReplFlag = "--repl"
+flagToString BuildFlag = "--build"
+flagToString TestFlag = "--testpkg"
+
+doIdrisCommand : IdrisFlag -> Program Int
+doIdrisCommand command = do
   Right manifest <- parseManifestFile "./ivor.toml" | Left err => do putStrLn err; pure 1
   depsDir <- getDepsDir
-  Effect.System.system $ "IDRIS_LIBRARY_PATH=" ++ depsDir ++ " idris --repl " ++ name manifest ++ ".ipkg" 
+  Effect.System.system $ "IDRIS_LIBRARY_PATH=" ++ depsDir ++ " idris " ++ flagToString command ++ " " ++ (name manifest) ++ ".ipkg" 
+
+idrisRepl : Program Int
+idrisRepl = doIdrisCommand ReplFlag
 
 idrisBuild : Program Int
-idrisBuild = do
-  Right manifest <- parseManifestFile "./ivor.toml" | Left err => do putStrLn err; pure 1
-  depsDir <- getDepsDir
-  Effect.System.system $ "IDRIS_LIBRARY_PATH=" ++ depsDir ++ " idris --build " ++ name manifest ++ ".ipkg"
+idrisBuild = doIdrisCommand BuildFlag
 
+idrisTest : Program Int
+idrisTest = doIdrisCommand TestFlag
+
+-- We need all the base idris libs in our deps dir
 copyIdrisLibs : Program Int
 copyIdrisLibs = do
   depsDir <- getDepsDir
