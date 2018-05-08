@@ -47,10 +47,10 @@ emptyflash/tomladris = "ec324128ebe8b446e84d8be60b0ed085d07fd36d"
 emptyflash/idris-ipkg-parser = "35cc2f54d4f3b3710f637d0a8c897bfbb32fe183"
 ```
 
-The dependencies look like user/repo = "git sha". Right now it doesn't 
-support transitive dependencies, so you'll have to flatten out your deps 
-and make sure they're in the right order. All the other flags match up with 
-Idris' ipkg file.
+The dependencies look like `user/repo = "git sha"`. This is likely to 
+change as I figure out how to handle transitive dependencies. Right now
+you'll have to flatten out your deps and make sure they're in the right 
+order. All the other flags match up with Idris' ipkg file.
 
 Once you have an ivor.toml you can run
 
