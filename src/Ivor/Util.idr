@@ -17,7 +17,8 @@ Program return =
 
 idrisAppDir : String
 idrisAppDir = 
-  case System.Info.os of
+  let os = System.Info.os
+  in case os of
        "Windows" => "%APPDATA%/idris"
        _ => "~/.idris"
 

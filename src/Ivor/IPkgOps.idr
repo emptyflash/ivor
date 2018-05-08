@@ -53,7 +53,7 @@ installIPkg iPkgDir iPkgFile depsDir dependency = do
   newDependency <- updatePkgName iPkgDir iPkgFile dependency
   installDir <- ipkgInstallDir newDependency depsDir
   system $ "rm -rf " ++ installDir -- Sometimes idris build fails if the ibcsubdir already exists
-  system $ "cd " ++ iPkgDir ++ " && IDRIS_LIBRARY_PATH=" ++ depsDir ++ " idris --build " ++ iPkgFile ++ " --ibcsubdir " ++ installDir
+  system $ "cd " ++ iPkgDir ++ " && IDRIS_LIBRARY_PATH=" ++ depsDir ++ " TARGET=" ++ depsDir ++ " idris --install " ++ iPkgFile
   pure newDependency
 
 
