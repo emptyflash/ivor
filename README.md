@@ -1,5 +1,6 @@
 # Ivor
-The steam powered Idris package manager
+The steam powered Idris package manager. Ivor gives you isolated and reproducable
+Idris builds.
 
 ## Getting started
 
@@ -52,12 +53,12 @@ change as I figure out how to handle transitive dependencies. Right now
 you'll have to flatten out your deps and make sure they're in the right 
 order. All the other flags match up with Idris' ipkg file.
 
-Once you have an ivor.toml you can run
+Once you have an ivor.toml you can run:
 
-`ivor install` to install the dependencies,
-`ivor build` to build your project,
-`ivor repl` to hop in the repl with all of your dependencies,
-`ivor test` to run the tests.
+* `ivor install` to install the dependencies,
+* `ivor build` to build your project,
+* `ivor repl` to hop in the repl with all of your dependencies,
+* `ivor test` to run the tests.
 
 
 If you have any problems please open an issue!
